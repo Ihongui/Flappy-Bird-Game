@@ -1,72 +1,103 @@
-let move_peed = 3,
-  gravity = 0.5;
-let bird = document.querySelector(".bird");
-let img = document.getElementById("bird-1");
+const bird = document.getElementById("bird");
+const pipesContainer = document.getElementById("pipes");
+const scoreDisplay = document.getElementById("score");
+const gameOverDisplay = document.getElementById("game-over");
+const scoreValue = document.getElementById("score-value");
 
-let bird_props = bird.getBoundingClientRect();
+let isGameOver = false;
+let score = 0;
 
-let background = document.querySelector(".background").getBoundingClientRect();
-let score_val = document.querySelector(".score_val");
-let message = document.querySelector(".message");
-let score_title = document.querySelector(".score_titel");
+// Function to create a new pipe
+function createPipe() {
+  const pipe = document.createElement("div");
+  pipe.classList.add("pipe");
+  pipe.style.left = "400px"; // Start off screen
+  const height = Math.random() * 300 + 100;
+  pipe.style.height = `${height}px`;
+  pipesContainer.appendChild(pipe);
 
-let game_state = "start";
-img.style.display = "none";
-message.classList.add('messageStyle');
-
-document.addEventListener('keydow', (e) => {
-    if(e.key == 'Enter' && game_state != 'play'){
-        document.querySelectorAll(.pipe_sprite).forEach((e)=>{
-            e.remove();
-        });
-        img.style.display = 'block';
-        bird.style.top = '40vh';
-        game_state =  'play';
-        message.innerHTML = 'score: ';
-        score_title.innerHTML = '0';
-        message.classList.remove('messageStyle');
-        play();
+  // Move the pipe
+  let pipePosition = 400;
+  const pipeInterval = setInterval(() => {
+    if (isGameOver) {
+      clearInterval(pipeInterval);
+      return;
     }
+    pipePosition -= 5;
+    pipe.style.left = `${pipePosition}px`;
+
+    // Check for collision
+    if (
+      pipePosition > 0 &&
+      pipePosition < 80 &&
+      (bird.offsetTop < height || bird.offsetTop > height + 200)
+    ) {
+      gameOver();
+    }
+
+    // Update score
+    if (pipePosition === 40) {
+      score++;
+      scoreValue.textContent = score;
+    }
+
+    // Remove pipe when off screen
+    if (pipePosition <= -60) {
+      pipesContainer.removeChild(pipe);
+      clearInterval(pipeInterval);
+    }
+  }, 20);
+}
+
+// Function to move the bird up
+function moveUp() {
+  if (!isGameOver) {
+    bird.style.top = `${bird.offsetTop - 50}px`;
+  }
+}
+
+// Function to reset the game
+function restartGame() {
+  isGameOver = false;
+  while (pipesContainer.firstChild) {
+    pipesContainer.removeChild(pipesContainer.firstChild);
+  }
+  bird.style.top = "50%";
+  score = 0;
+  scoreValue.textContent = score;
+  gameOverDisplay.style.display = "none";
+  startGame();
+}
+
+// Function to end the game
+function gameOver() {
+  isGameOver = true;
+  gameOverDisplay.style.display = "block";
+}
+
+// Function to start the game
+function startGame() {
+  scoreValue.textContent = score;
+  createPipe();
+  const gameInterval = setInterval(() => {
+    if (!isGameOver) {
+      createPipe();
+    } else {
+      clearInterval(gameInterval);
+    }
+  }, 2000);
+}
+
+// Event listeners
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    if (isGameOver) {
+      restartGame();
+    } else {
+      moveUp();
+    }
+  }
 });
 
-function play(){
-    function move(){
-        if( game_state != 'play') return;
-
-        let pipe_sprite = document.querySelectorAll('.pipe_sprite');
-        pipe_sprite.forEach((element) => {
-            let pipe_sprite_props.right = element.getBoundingClientRect();
-            bird_props = bird.getBoundingClientRect();
-
-            if( pipe_sprite_props.right <= 0){
-                element.remove();
-            } else{
-                if(bird_props.left < pipe_sprite_props.left + pipe_sprite_props.width && bird_props.left + bird_props.width > pipe_sprite_props.left && bird_props.top < pipe_sprite_props.top + pipe_sprite_props.height && bird_props.top + bird_props.height > pipe_sprite_props.top){
-                    game_state = 'End';
-                    message.innerHTML = 'Game over'.fontcolor('red') + '<br> Press Enter To restart';
-                    img.style.display = 'none';
-                    return;
-                } else{
-                    if(pipe_sprite_props.right < bird_props.left && pipe_sprite_props.right + move_peed >= bird_props.left && element.increase_score == '1'){
-                        score_val.innerHTML =+ score_val.innerHTML + 1;
-                    }
-                    element.style.left = pipe_sprite_props.left - move_speed + 'px';
-                }
-            }
-        });
-        requestAnimationFrame(move);
-    }
-    requestAnimationFrame(move);
-
-    let bird_dy = 0;
-    function apply_gravity(){
-        if(game_state != 'play') return;
-        bird_dy = bird_dy + gravity;
-        document.addEventListener('keydown', (e) => {
-            if(e.key == 'ArrowUp' || e.key == ''){
-                img.src = 'image/Bird.jpeg';
-            }
-        });
-      //  22:45 c'est la ou je me suis arreter le mercredi 00:41 minites,
-    }
-}
+// Start the game
+startGame();
